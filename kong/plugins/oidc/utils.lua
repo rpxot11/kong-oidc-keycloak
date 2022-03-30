@@ -1,6 +1,7 @@
 local cjson = require("cjson")
-
 local M = {}
+
+
 
 local function parseFilters(csvFilters)
     local filters = {}
@@ -43,6 +44,7 @@ function M.get_options(config, ngx)
     return {
         client_id = config.client_id,
         client_secret = config.client_secret,
+        jwt_secret = config.jwt_secret,
         discovery = config.discovery,
         introspection_endpoint = config.introspection_endpoint,
         timeout = config.timeout,
@@ -74,7 +76,6 @@ function M.get_session_options(config, ngx)
             port = config.session_redis_port,
             prefix = config.session_redis_prefix,
             socket = config.session_redis_socket,
-            host = config.session_redis_host,
             auth = config.session_redis_auth,
             server_name = config.session_redis_server_name,
         }
@@ -87,8 +88,37 @@ function M.exit(httpStatusCode, message, ngxCode)
     ngx.exit(ngxCode)
 end
 
-function M.injectAccessToken(accessToken)
-    ngx.req.set_header("Authorization", "Bearer " .. accessToken)
+function M.injectBearerCached(jwt)
+    print("JWT CAHCED " .. jwt)
+    ngx.req.set_header("Authorization","Bearer " .. jwt)
+end
+function M.injectAccessToken(accessToken, user, secret, client, cookie)    
+    --my code
+    local jwt = require "resty.jwt"
+
+    local jwt_table = { 
+        ["header"] = {["typ"] = "JWT", ["alg"] = "HS512"},
+        ["payload"] = {
+            ["id"] = user.id, 
+                        ["name"] = user.name,
+                        ["gn"] = user.given_name,
+                        ["fn"] = user.family_name,
+                        ["email"] = user.email,
+                        ["ev"] = user.email_verified,
+                        ["ss"] = user.session_state,  
+                        ["jti"] = user.jti, 
+                        ["auth_time"] = user.auth_time,
+                        ["roles"] = user.roles
+                    } 
+    }   
+    local jwt_obj = jwt:sign(secret, jwt_table)
+    
+    if(client:ping()) then
+        client:set("jwt:" .. cookie , jwt_obj)
+    end
+    ngx.req.set_header("Authorization","Bearer " .. jwt_obj)
+    -- end my code
+        
 end
 
 function M.injectIDToken(idToken)
@@ -96,14 +126,15 @@ function M.injectIDToken(idToken)
     ngx.req.set_header("X-ID-Token", ngx.encode_base64(tokenStr))
 end
 
-function M.injectUser(user)
+function M.injectUser(user, secret)
     local tmp_user = user
     tmp_user.id = user.sub
     tmp_user.username = user.preferred_username
     ngx.ctx.authenticated_credential = tmp_user
-    local userinfo = cjson.encode(user)
+    local userinfo = cjson.encode(user)  
     ngx.req.set_header("X-Userinfo", ngx.encode_base64(userinfo))
 end
+
 
 function M.has_bearer_access_token()
     local header = ngx.req.get_headers()['Authorization']

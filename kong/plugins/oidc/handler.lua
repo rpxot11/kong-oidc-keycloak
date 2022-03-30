@@ -4,6 +4,12 @@ local utils = require("kong.plugins.oidc.utils")
 local filter = require("kong.plugins.oidc.filter")
 local session = require("kong.plugins.oidc.session")
 
+
+local cjson = require("cjson")
+local redis = require("kong.plugins.oidc.redis")
+
+
+
 OidcHandler.PRIORITY = 1000
 
 function OidcHandler:new()
@@ -24,32 +30,46 @@ function OidcHandler:access(config)
 end
 
 function handle(oidcConfig, sessionConfig)
-    local response
-    if oidcConfig.introspection_endpoint then
-        response = introspect(oidcConfig)
-        if response then
-            ngx.log(ngx.DEBUG, "User found from introspection")
-            utils.injectUser(response)
-        end
+    local client = redis.connect(sessionConfig.redis.host, sessionConfig.redis.port)
+    local cookie_name = sessionConfig.name
+    local var_name = "cookie_" .. cookie_name
+    local cookie_value = ngx.var[var_name]
+    print(cookie_value)
+    local jwt 
+    if(client:ping() ) then
+        jwt = client:get("jwt:" .. cookie)
     end
+    if(jwt) then 
+        utils.injectBearerCached(jwt)
+    else     
+        local response
+        if oidcConfig.introspection_endpoint then
+            response = introspect(oidcConfig)
+            if response then
+                ngx.log(ngx.DEBUG, "User found from introspection")
+                utils.injectUser(response)
+            end
+        end
 
-    if response == nil then
-        response = make_oidc(oidcConfig, sessionConfig)
-        if response then
-            if (response.user) then
-                ngx.log(ngx.DEBUG, "OidcHandler INJECT USER: ")
-                utils.injectUser(response.user)
-            end
-            if (response.access_token) then
-                ngx.log(ngx.DEBUG, "OidcHandler ACCESS TOKEN: ")
-                utils.injectAccessToken(response.access_token)
-            end
-            if (response.id_token) then
-                ngx.log(ngx.DEBUG, "OidcHandler ID TOKEN: ")
-                utils.injectIDToken(response.id_token)
+        if response == nil then
+            response = make_oidc(oidcConfig, sessionConfig)
+            if response then
+                if (response.user) then
+                    ngx.log(ngx.DEBUG, "OidcHandler INJECT USER: ")
+                    utils.injectUser(response.user)
+                end
+                if (response.access_token) then
+                    ngx.log(ngx.DEBUG, "OidcHandler ACCESS TOKEN: ")
+                    utils.injectAccessToken(response.access_token, response.user, oidcConfig.jwt_secret, client, cookie_value)
+                end
+                if (response.id_token) then
+                    ngx.log(ngx.DEBUG, "OidcHandler ID TOKEN: ")
+                    utils.injectIDToken(response.id_token)
+                end
             end
         end
     end
+    
 end
 
 function make_oidc(oidcConfig, sessionConfig)
@@ -80,6 +100,17 @@ function introspect(oidcConfig)
         return res
     end
     return nil
+end
+
+function mysplit (inputstr, sep)
+    if sep == nil then
+            sep = "%s"
+    end
+    local t={}
+    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+            table.insert(t, str)
+    end
+    return t
 end
 
 

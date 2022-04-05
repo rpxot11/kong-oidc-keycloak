@@ -30,18 +30,16 @@ services:
     networks:
       - kong-net
 
-  kong:
-    build:
-      context: ./      
-    image: kong-rui
+  kong:   
+    image: kong
     depends_on:
       - kong-db
     networks:
       - kong-net
     ports:
-      - "8000:8000" # Listener
+      - "80:8000" # Listener
       - "8001:8001" # Admin API
-      - "4443:8443" # Listener  (SSL)
+      - "443:8443" # Listener  (SSL)
       - "8444:8444" # Admin API (SSL)
     environment:
       KONG_DATABASE:         postgres

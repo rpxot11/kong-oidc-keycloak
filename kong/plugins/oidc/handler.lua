@@ -34,10 +34,12 @@ function handle(oidcConfig, sessionConfig)
     local cookie_name = sessionConfig.name
     local var_name = "cookie_" .. cookie_name
     local cookie_value = ngx.var[var_name]
-    print(cookie_value)
     local jwt 
-    if(client:ping() ) then
-        jwt = client:get("jwt:" .. cookie)
+    if(not cookie_value == nil) then 
+        print(cookie_value)    
+        if(client:ping() ) then
+            jwt = client:get("jwt:" .. cookie_value)
+        end
     end
     if(jwt) then 
         utils.injectBearerCached(jwt)

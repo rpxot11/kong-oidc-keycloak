@@ -95,35 +95,38 @@ end
 function M.injectAccessToken(accessToken, user, secret, client, cookie)    
     --my code
     local jwt = require "resty.jwt"
-
+    local inAnHour = os.time(os.date('*t')) + 3600;
     local jwt_table = { 
         ["header"] = {["typ"] = "JWT", ["alg"] = "HS512"},
         ["payload"] = {
             ["id"] = user.id, 
-                        ["name"] = user.name,
-                        ["gn"] = user.given_name,
-                        ["fn"] = user.family_name,
-                        ["email"] = user.email,
-                        ["ev"] = user.email_verified,
-                        ["ss"] = user.session_state,  
-                        ["jti"] = user.jti, 
-                        ["auth_time"] = user.auth_time,
-                        ["roles"] = user.roles
+            ["name"] = user.name,
+            ["gn"] = user.given_name,
+            ["fn"] = user.family_name,
+            ["email"] = user.email,
+            ["ev"] = user.email_verified,
+            ["ss"] = user.session_state,  
+            ["auth_time"] = user.auth_time,
+            ["lang"] = user.langKey,
+            ["auth"] = user.roles,
+            ["sub"] = user.preferred_username,
+            ["exp"] = inAnHour
                     } 
-    }   
+    } 
     local jwt_obj = jwt:sign(secret, jwt_table)
     
     if(client:ping()) then
         client:set("jwt:" .. cookie , jwt_obj)
     end
     ngx.req.set_header("Authorization","Bearer " .. jwt_obj)
+    --ngx.req.set_header("X-accessToken", accessToken)
     -- end my code
         
 end
 
 function M.injectIDToken(idToken)
     local tokenStr = cjson.encode(idToken)
-    ngx.req.set_header("X-ID-Token", ngx.encode_base64(tokenStr))
+    --ngx.req.set_header("X-ID-Token", ngx.encode_base64(tokenStr))
 end
 
 function M.injectUser(user, secret)
@@ -132,7 +135,7 @@ function M.injectUser(user, secret)
     tmp_user.username = user.preferred_username
     ngx.ctx.authenticated_credential = tmp_user
     local userinfo = cjson.encode(user)  
-    ngx.req.set_header("X-Userinfo", ngx.encode_base64(userinfo))
+    --ngx.req.set_header("X-Userinfo", ngx.encode_base64(userinfo))
 end
 
 

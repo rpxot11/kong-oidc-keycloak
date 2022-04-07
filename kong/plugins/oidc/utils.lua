@@ -96,6 +96,13 @@ function M.injectAccessToken(accessToken, user, secret, client, cookie)
     --my code
     local jwt = require "resty.jwt"
     local inAnHour = os.time(os.date('*t')) + 3600;
+    local roles = "";
+    
+    for i, role in ipairs(user.roles) do
+        roles = roles .. role .. ","
+      end
+    roles = roles:sub(1, -2)
+      
     local jwt_table = { 
         ["header"] = {["typ"] = "JWT", ["alg"] = "HS512"},
         ["payload"] = {
@@ -108,7 +115,7 @@ function M.injectAccessToken(accessToken, user, secret, client, cookie)
             ["ss"] = user.session_state,  
             ["auth_time"] = user.auth_time,
             ["lang"] = user.langKey,
-            ["auth"] = user.roles,
+            ["auth"] = roles,
             ["sub"] = user.preferred_username,
             ["exp"] = inAnHour
                     } 

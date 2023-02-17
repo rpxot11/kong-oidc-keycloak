@@ -27,7 +27,7 @@ services:
     image: "redis:alpine"
     hostname: redis
     ports:
-      - "6379:6379"
+      - "6378:6379"
     networks:
       - kong-net
 
@@ -35,8 +35,8 @@ services:
     build:
       context: kong/
       dockerfile: Dockerfile
-    extra_hosts:
-      - "keycloak-host:10.18.18.118"
+    #extra_hosts:
+    #  - "keycloak-host:10.18.18.118"
     depends_on:
       - kong-db
     networks:

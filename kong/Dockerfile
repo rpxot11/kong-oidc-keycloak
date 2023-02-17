@@ -1,4 +1,4 @@
-FROM kong:2.0.2-alpine
+FROM kong:2.8.1-alpine
 
 USER root
 
@@ -11,6 +11,7 @@ ADD lib/resty/openidc.lua /usr/local/openresty/lualib/resty/openidc.lua
 ADD plugins/oidc /usr/local/share/lua/5.1/kong/plugins/oidc
 
 # Install dependencies
+RUN luarocks install uuid
 RUN luarocks install lua-resty-http
 RUN luarocks install lua-resty-session
 RUN luarocks install lua-resty-jwt 0.2.2

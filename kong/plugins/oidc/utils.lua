@@ -1,7 +1,7 @@
 local cjson = require("cjson")
+local jwt = require "resty.jwt"
+
 local M = {}
-
-
 
 local function parseFilters(csvFilters)
     local filters = {}
@@ -44,7 +44,6 @@ function M.get_options(config, ngx)
     return {
         client_id = config.client_id,
         client_secret = config.client_secret,
-        jwt_secret = config.jwt_secret,
         discovery = config.discovery,
         introspection_endpoint = config.introspection_endpoint,
         timeout = config.timeout,
@@ -76,8 +75,14 @@ function M.get_session_options(config, ngx)
             port = config.session_redis_port,
             prefix = config.session_redis_prefix,
             socket = config.session_redis_socket,
+            host = config.session_redis_host,
             auth = config.session_redis_auth,
-            server_name = config.session_redis_server_name,
+            server_name = config.session_redis_server_name
+            
+        }, 
+        jwt = {
+            cookie_name = config.jwt_cookie_name,
+            secret = config.jwt_secret
         }
     }
 end
@@ -88,21 +93,52 @@ function M.exit(httpStatusCode, message, ngxCode)
     ngx.exit(ngxCode)
 end
 
-function M.injectBearerCached(jwt)
-    print("JWT CAHCED " .. jwt)
-    ngx.req.set_header("Authorization","Bearer " .. jwt)
+function M.injectAccessToken(accessToken)
+    ngx.req.set_header("Authorization", "Bearer " .. accessToken)
 end
-function M.injectAccessToken(accessToken, user, secret, client, cookie)    
+
+function M.injectIDToken(idToken)
+    local tokenStr = cjson.encode(idToken)
+    ngx.req.set_header("X-ID-Token", ngx.encode_base64(tokenStr))
+end
+
+function M.injectUser(user)
+    local tmp_user = user
+    tmp_user.id = user.sub
+    tmp_user.username = user.preferred_username
+    ngx.ctx.authenticated_credential = tmp_user
+    local userinfo = cjson.encode(user)
+    ngx.req.set_header("X-Userinfo", ngx.encode_base64(userinfo))
+end
+
+function M.has_bearer_access_token()
+    local header = ngx.req.get_headers()['Authorization']
+    if header and header:find(" ") then
+        local divider = header:find(' ')
+        if string.lower(header:sub(0, divider - 1)) == string.lower("Bearer") then
+            return true
+        end
+    end
+    return false
+end
+
+
+
+function M.getJwtAccessToken(accessToken, user, secret)    
     --my code
-    local jwt = require "resty.jwt"
     local inAnHour = os.time(os.date('*t')) + 3600;
     local roles = "";
     
-    for i, role in ipairs(user.roles) do
-        roles = roles .. role .. ","
-      end
-    roles = roles:sub(1, -2)
-      
+    --my code protect roles nil
+    --if(user.roles ~= nil) 
+    if(not(user.roles == nil)) 
+    then 
+        for i, role in ipairs(user.roles) do
+            roles = roles .. role .. ","
+          end
+        roles = roles:sub(1, -2)
+    end 
+
     local jwt_table = { 
         ["header"] = {["typ"] = "JWT", ["alg"] = "HS512"},
         ["payload"] = {
@@ -121,40 +157,13 @@ function M.injectAccessToken(accessToken, user, secret, client, cookie)
                     } 
     } 
     local jwt_obj = jwt:sign(secret, jwt_table)
-    
-    if(client:ping()) then
-        client:set("jwt:" .. cookie , jwt_obj)
-    end
-    ngx.req.set_header("Authorization","Bearer " .. jwt_obj)
-    --ngx.req.set_header("X-accessToken", accessToken)
+    ngx.log(ngx.DEBUG, "************* TOKEN GENERATED ****************" .. jwt_obj)
+
+    local userinfo = cjson.encode(user)
+    ngx.log(ngx.DEBUG, "FROM USER INFO " .. ngx.encode_base64(userinfo))
+    ngx.log(ngx.DEBUG, "FROM ACCESS TOKEN  " .. accessToken)
+    return jwt_obj
     -- end my code
-        
-end
-
-function M.injectIDToken(idToken)
-    local tokenStr = cjson.encode(idToken)
-    --ngx.req.set_header("X-ID-Token", ngx.encode_base64(tokenStr))
-end
-
-function M.injectUser(user, secret)
-    local tmp_user = user
-    tmp_user.id = user.sub
-    tmp_user.username = user.preferred_username
-    ngx.ctx.authenticated_credential = tmp_user
-    local userinfo = cjson.encode(user)  
-    --ngx.req.set_header("X-Userinfo", ngx.encode_base64(userinfo))
-end
-
-
-function M.has_bearer_access_token()
-    local header = ngx.req.get_headers()['Authorization']
-    if header and header:find(" ") then
-        local divider = header:find(' ')
-        if string.lower(header:sub(0, divider - 1)) == string.lower("Bearer") then
-            return true
-        end
-    end
-    return false
 end
 
 return M

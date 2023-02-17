@@ -3,7 +3,6 @@ return {
   fields = {
     client_id = { type = "string", required = true },
     client_secret = { type = "string", required = true },
-    jwt_secret = { type = "string", required = true },
     discovery = { type = "string", required = true, default = "https://.well-known/openid-configuration" },
     introspection_endpoint = { type = "string", required = false },
     timeout = { type = "number", required = false },
@@ -35,5 +34,7 @@ return {
     session_redis_prefix = { type = "string", required = false },
     session_redis_ssl = { type = "string", required = false, default = 'off' },
     session_redis_ssl_verify = { type = "string", required = false, default = 'off'},
+    jwt_secret = { type = "string", required = true, default = '78ae59e5-8283-4d5b-80c0-be8047715826'},
+    jwt_cookie_name = { type = "string", required = true, default = 'TMLCRM'},
   }
 }

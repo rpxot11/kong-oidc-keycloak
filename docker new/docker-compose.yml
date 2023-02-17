@@ -2,11 +2,11 @@ version: '3.4'
 
 networks: 
   kong-net:
-#  keycloak-net:
+  keycloak-net:
 
 volumes:
   kong-datastore:
-#  keycloak-datastore:
+  keycloak-datastore:
 
 services:
   kong-db:
@@ -26,7 +26,7 @@ services:
     image: "redis:alpine"
     hostname: redis
     ports:
-      - "6379:6379"
+      - "6378:6379"
     networks:
       - kong-net
 
@@ -37,9 +37,9 @@ services:
     networks:
       - kong-net
     ports:
-      - "80:8000" # Listener
+      - "8000:8000" # Listener
       - "8001:8001" # Admin API
-      - "443:8443" # Listener  (SSL)
+      - "4443:8443" # Listener  (SSL)
       - "8444:8444" # Admin API (SSL)
     environment:
       KONG_DATABASE:         postgres
@@ -77,33 +77,33 @@ services:
       DB_DATABASE: konga_db
       NODE_ENV: development
 
-#  keycloak-db:
-#    image: postgres:13-alpine
-#    volumes: 
-#      - keycloak-datastore:/var/lib/postgresql/data
-#    networks:
-#      - keycloak-net
-#    ports:
-#      - "25432:5432"
-#    environment:
-#      POSTGRES_DB:       keycloak
-#      POSTGRES_USER:     keycloak
-#      POSTGRES_PASSWORD: password
+  keycloak-db:
+    image: postgres:13-alpine
+    volumes: 
+      - keycloak-datastore:/var/lib/postgresql/data
+    networks:
+      - keycloak-net
+    ports:
+      - "25432:5432"
+    environment:
+      POSTGRES_DB:       keycloak
+      POSTGRES_USER:     keycloak
+      POSTGRES_PASSWORD: password
 
-#  keycloak:
-#    image: jboss/keycloak:12.0.4
-#    depends_on:
-#      - keycloak-db
-#    networks:
-#      - keycloak-net
-#    ports:
-#      - "8180:8080"
-#    environment:
-#      DB_VENDOR:   POSTGRES
-#      DB_ADDR:     keycloak-db
-#      DB_PORT:     5432
-#      DB_DATABASE: keycloak
-#      DB_USER:     keycloak
-#      DB_PASSWORD: password
-#      KEYCLOAK_USER:     admin
-#      KEYCLOAK_PASSWORD: admin
+  keycloak:
+    image: jboss/keycloak:12.0.4
+    depends_on:
+      - keycloak-db
+    networks:
+      - keycloak-net
+    ports:
+      - "8180:8080"
+    environment:
+      DB_VENDOR:   POSTGRES
+      DB_ADDR:     keycloak-db
+      DB_PORT:     5432
+      DB_DATABASE: keycloak
+      DB_USER:     keycloak
+      DB_PASSWORD: password
+      KEYCLOAK_USER:     admin
+      KEYCLOAK_PASSWORD: admin

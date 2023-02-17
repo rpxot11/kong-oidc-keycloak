@@ -1,4 +1,4 @@
-docker-compose build redis
+docker-compose up -d redis
 docker-compose build kong
 docker-compose up -d kong-db
 docker-compose run --rm kong kong migrations bootstrap

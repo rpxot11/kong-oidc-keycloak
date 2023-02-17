@@ -49,7 +49,7 @@ function handle(oidcConfig, sessionConfig)
                 ngx.log(ngx.DEBUG, "***************  Cookie  :  ***************" )
                 ngx.log(ngx.DEBUG, cookie_value)
     
-                local token = cache_get("session_jwt:".. cookie_value)
+                local token = cache_get("session_jwt:".. cookie_value, sessionConfig.redis.host, sessionConfig.redis.port)
                 if(token ~= nil)
                 then 
                     ngx.log(ngx.DEBUG, "***************  Cache value :  ***************" )
@@ -104,7 +104,7 @@ function login(oidcConfig, sessionConfig)
         --local uuid = "12342135124542151425wfmlkwmfl12435124451245"
         ngx.log(ngx.DEBUG, "Login sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
-        cache_set("session_jwt:" .. uuid , token, 2 * 60)
+        cache_set("session_jwt:" .. uuid , token, 30 * 60, sessionConfig.redis.host, sessionConfig.redis.port)
         ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
         return ngx.redirect("/")
     end
@@ -124,7 +124,7 @@ function update_login(oidcConfig, sessionConfig, cookie_value)
     if response then
         ngx.log(ngx.DEBUG, "Update sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
-        cache_set("session_jwt:" .. cookie_value , token, 2 * 60)
+        cache_set("session_jwt:" .. cookie_value , token, 30 * 60, sessionConfig.redis.host, sessionConfig.redis.port)
         return token;
     end
 end
@@ -175,11 +175,11 @@ end
 
 
 -- set value in server-wide cache if available
-function cache_set(key, value, exp)
+function cache_set(key, value, exp, redisHost, redisPort)
     
     local red = redis:new()
     red:set_timeout(1000)  -- 1 second~
-    local ok, err = red:connect("redis", 6379)
+    local ok, err = red:connect(redisHost, redisPort)
     if not ok then
         ngx.say("Failed to connect to Redis: ", err)
         return
@@ -202,12 +202,12 @@ function cache_set(key, value, exp)
 end
   
   -- retrieve value from server-wide cache if available
-function cache_get(key)
+function cache_get(key , redisHost, redisPort)
     ngx.log(ngx.DEBUG, "CAHCE GET SATART")
     local red = redis:new()
     red:set_timeout(1000)  -- 1 second
 
-    local ok, err = red:connect("redis", 6379)
+    local ok, err = red:connect(redisHost, redisPort)
     if not ok then
         ngx.say("Failed to connect to Redis: ", err)
         return

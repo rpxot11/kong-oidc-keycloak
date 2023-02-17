@@ -33,8 +33,8 @@ function handle(oidcConfig, sessionConfig)
     ngx.log(ngx.DEBUG, uri)
     
 
-    if string.find(uri, "/oidc/login") then
-        print ("The word login was found.")
+    if string.find(uri, "/oauth2/authorization/oidc") then
+        print ("The word authorization was found.")
         login(oidcConfig, sessionConfig);
         else if string.find(uri, "logout") then 
             logout(oidcConfig, sessionConfig)

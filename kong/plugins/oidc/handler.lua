@@ -104,7 +104,7 @@ function login(oidcConfig, sessionConfig)
         --local uuid = "12342135124542151425wfmlkwmfl12435124451245"
         ngx.log(ngx.DEBUG, "Login sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
-        cache_set("session_jwt:" .. uuid , token, 30 * 60, sessionConfig.redis.host, sessionConfig.redis.port)
+        cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
         ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
         return ngx.redirect("/")
     end
@@ -124,7 +124,7 @@ function update_login(oidcConfig, sessionConfig, cookie_value)
     if response then
         ngx.log(ngx.DEBUG, "Update sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
-        cache_set("session_jwt:" .. cookie_value , token, 30 * 60, sessionConfig.redis.host, sessionConfig.redis.port)
+        cache_set("session_jwt:" .. cookie_value , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
         return token;
     end
 end

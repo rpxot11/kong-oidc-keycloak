@@ -36,5 +36,6 @@ return {
     session_redis_ssl_verify = { type = "string", required = false, default = 'off'},
     jwt_secret = { type = "string", required = true, default = '78ae59e5-8283-4d5b-80c0-be8047715826'},
     jwt_cookie_name = { type = "string", required = true, default = 'TMLCRM'},
+    jwt_redis_timeout = { type = "number", required = false, default = 1800 },
   }
 }

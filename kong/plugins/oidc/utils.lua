@@ -82,7 +82,8 @@ function M.get_session_options(config, ngx)
         }, 
         jwt = {
             cookie_name = config.jwt_cookie_name,
-            secret = config.jwt_secret
+            secret = config.jwt_secret,
+            timeout = config.jwt_redis_timeout
         }
     }
 end

@@ -56,11 +56,7 @@ function handle(oidcConfig, sessionConfig)
                     ngx.log(ngx.DEBUG, token)
                     utils.injectAccessToken(token)
                 else 
-                    local tokenUpdated = update_login(oidcConfig, sessionConfig, cookie_value);
-                    if(tokenUpdated ~= nil) then 
-                        ngx.log(ngx.DEBUG, "***************  New Cache value :  ***************" )
-                        ngx.log(ngx.DEBUG, tokenUpdated)
-                        utils.injectAccessToken(tokenUpdated)
+                    login(oidcConfig, sessionConfig);
                 end
             end
         end

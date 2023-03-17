@@ -176,7 +176,10 @@ end
 
 -- set value in server-wide cache if available
 function cache_set(key, value, exp, redisHost, redisPort)
-    
+    ngx.log(ngx.DEBUG, "******* CACHE SET START ******")
+    ngx.log(ngx.DEBUG, "key: " .. key)
+    ngx.log(ngx.DEBUG, "value: " .. value)
+    ngx.log(ngx.DEBUG, "exp: " .. exp)
     local red = redis:new()
     red:set_timeout(1000)  -- 1 second~
     local ok, err = red:connect(redisHost, redisPort)
@@ -197,7 +200,7 @@ function cache_set(key, value, exp, redisHost, redisPort)
         ngx.say("Failed to set expiration time for key: ", err)
         return
     end
-
+    ngx.log(ngx.DEBUG, "******* CACHE SET END ******")
     red:close()
 end
   

@@ -49,21 +49,24 @@ function handle(oidcConfig, sessionConfig)
                 ngx.log(ngx.DEBUG, "***************  Cookie  :  ***************" )
                 ngx.log(ngx.DEBUG, cookie_value)
     
-                local token = cache_get("session_jwt:".. cookie_value, sessionConfig.redis.host, sessionConfig.redis.port)
+                local token = getTokenfromCache(cookie_value, sessionConfig.redis.host, sessionConfig.redis.port)
                 if(token ~= nil)
                 then 
                     ngx.log(ngx.DEBUG, "***************  Cache value :  ***************" )
                     ngx.log(ngx.DEBUG, token)
                     utils.injectAccessToken(token)
                 else 
-                    local tokenUpdated = update_login(oidcConfig, sessionConfig, cookie_value);
-                    if(tokenUpdated ~= nil) then 
-                        ngx.log(ngx.DEBUG, "***************  New Cache value :  ***************" )
-                        ngx.log(ngx.DEBUG, tokenUpdated)
-                        utils.injectAccessToken(tokenUpdated)
-                    end
+                    -- local tokenUpdated = update_login(oidcConfig, sessionConfig, cookie_value);
+                    -- if(tokenUpdated ~= nil) then 
+                    --     ngx.log(ngx.DEBUG, "***************  New Cache value :  ***************" )
+                    --     ngx.log(ngx.DEBUG, tokenUpdated)
+                    --     utils.injectAccessToken(tokenUpdated)
+                    -- end
+                    utils.exit(401, err, ngx.HTTP_UNAUTHORIZED)
+                end
+            else 
+                --remove authoriation header  
             end
-        end
     end
 end
 
@@ -96,6 +99,33 @@ end
     -- end
 end
 
+
+function getTokenfromCache(cookie_value, host, port)
+
+    local token = cache_get("session_jwt:".. cookie_value, sessionConfig.redis.host, sessionConfig.redis.port)
+    if(token ~= nil)
+    then
+        local timestamp = cache_get("session_jwt:".. cookie_value .. ":timestamp", sessionConfig.redis.host, sessionConfig.redis.port)
+        if(timestamp ~= nil)
+        then
+            local inFiveMinuts = os.time(os.date('*t')) + 300;
+            local inThirtyMinuts = os.time(os.date('*t')) + 1800;
+            if(timestamp <  inFiveMinuts)
+                --refresh timestamp
+                cache_set("session_jwt:".. cookie_value .. ":timestamp", inThirtyMinuts, 43200,  sessionConfig.redis.host, sessionConfig.redis.port) 
+                response = make_oidc(oidcConfig, sessionConfig);
+                if response then
+                    ngx.log(ngx.DEBUG, "Update sucess");
+                    token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
+                    cache_set("session_jwt:" .. cookie_value , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)                    
+                end          
+            end
+            return token;
+        end
+    end
+    utils.exit(401, err, ngx.HTTP_UNAUTHORIZED)
+end
+
 function login(oidcConfig, sessionConfig)
     response = make_oidc(oidcConfig, sessionConfig);
     if response then
@@ -104,7 +134,8 @@ function login(oidcConfig, sessionConfig)
         --local uuid = "12342135124542151425wfmlkwmfl12435124451245"
         ngx.log(ngx.DEBUG, "Login sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
-        cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
+        --cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
+        cache_set("session_jwt:" .. uuid , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
         ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
         return ngx.redirect("/")
     end

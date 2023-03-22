@@ -108,9 +108,11 @@ function getTokenfromCache(cookie_value, host, port)
         local timestamp = cache_get("session_jwt:".. cookie_value .. ":timestamp", sessionConfig.redis.host, sessionConfig.redis.port)
         if(timestamp ~= nil)
         then
-            local inFiveMinuts = os.time(os.date('*t')) + 300;
-            local inThirtyMinuts = os.time(os.date('*t')) + 1800;
+            local inFiveMinuts = os.time(os.date('*t')) + 60;
+            local inThirtyMinuts = os.time(os.date('*t')) + 180;
             if(timestamp <  inFiveMinuts)
+            then
+                ngx.log(ngx.DEBUG, " ******************** TIMESTAMP UPDATED ***********************");
                 --refresh timestamp
                 cache_set("session_jwt:".. cookie_value .. ":timestamp", inThirtyMinuts, 43200,  sessionConfig.redis.host, sessionConfig.redis.port) 
                 response = make_oidc(oidcConfig, sessionConfig);
@@ -127,6 +129,7 @@ function getTokenfromCache(cookie_value, host, port)
 end
 
 function login(oidcConfig, sessionConfig)
+    local inThirtyMinuts = os.time(os.date('*t')) + 180;
     response = make_oidc(oidcConfig, sessionConfig);
     if response then
         uuid.seed()
@@ -136,6 +139,7 @@ function login(oidcConfig, sessionConfig)
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
         --cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:" .. uuid , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
+        cache_set("session_jwt:".. uuid .. ":timestamp" , inThirtyMinuts, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
         ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
         return ngx.redirect("/")
     end

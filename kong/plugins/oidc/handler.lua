@@ -49,7 +49,7 @@ function handle(oidcConfig, sessionConfig)
                 ngx.log(ngx.DEBUG, "***************  Cookie  :  ***************" )
                 ngx.log(ngx.DEBUG, cookie_value)
     
-                local token = getTokenfromCache(cookie_value, sessionConfig.redis.host, sessionConfig.redis.port)
+                local token = getTokenfromCache(cookie_value, sessionConfig.redis.host, sessionConfig.redis.port, sessionConfig.jwt.secret)
                 if(token ~= nil)
                 then 
                     ngx.log(ngx.DEBUG, "***************  Cache value :  ***************" )
@@ -100,26 +100,29 @@ end
 end
 
 
-function getTokenfromCache(cookie_value, host, port)
-
-    local token = cache_get("session_jwt:".. cookie_value, sessionConfig.redis.host, sessionConfig.redis.port)
+function getTokenfromCache(cookie_value, host, port, secret)
+    ngx.log(ngx.DEBUG, "********* GETTING TOKEN FROM CACHE ***********");
+    local token = cache_get("session_jwt:".. cookie_value, host, port)
     if(token ~= nil)
     then
-        local timestamp = cache_get("session_jwt:".. cookie_value .. ":timestamp", sessionConfig.redis.host, sessionConfig.redis.port)
+        ngx.log(ngx.DEBUG, "********* token not nil ***********");
+        local timestamp = cache_get("session_jwt:".. cookie_value .. ":timestamp", host, port)
         if(timestamp ~= nil)
         then
+            ngx.log(ngx.DEBUG, "timestamp " .. timestamp);
             local inFiveMinuts = os.time(os.date('*t')) + 60;
             local inThirtyMinuts = os.time(os.date('*t')) + 180;
             if(timestamp <  inFiveMinuts)
             then
-                ngx.log(ngx.DEBUG, " ******************** TIMESTAMP UPDATED ***********************");
+                ngx.log(ngx.DEBUG, "timestamp < 5 minuts ");
+                ngx.log(ngx.DEBUG, " ******************** TIMESTAMP UPDATE ***********************");
                 --refresh timestamp
-                cache_set("session_jwt:".. cookie_value .. ":timestamp", inThirtyMinuts, 43200,  sessionConfig.redis.host, sessionConfig.redis.port) 
+                cache_set("session_jwt:".. cookie_value .. ":timestamp", inThirtyMinuts, 43200,  host, port) 
                 response = make_oidc(oidcConfig, sessionConfig);
                 if response then
                     ngx.log(ngx.DEBUG, "Update sucess");
-                    token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
-                    cache_set("session_jwt:" .. cookie_value , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)                    
+                    token = utils.getJwtAccessToken(response.access_token, response.user, secret)
+                    cache_set("session_jwt:" .. cookie_value , token, 43200, host, port)                    
                 end          
             end
             return token;
@@ -212,9 +215,9 @@ end
 -- set value in server-wide cache if available
 function cache_set(key, value, exp, redisHost, redisPort)
     ngx.log(ngx.DEBUG, "******* CACHE SET START ******")
-    ngx.log(ngx.DEBUG, "key: " .. key)
-    ngx.log(ngx.DEBUG, "value: " .. value)
-    ngx.log(ngx.DEBUG, "exp: " .. exp)
+    --ngx.log(ngx.DEBUG, "key: " .. key)
+    --ngx.log(ngx.DEBUG, "value: " .. value)
+    --ngx.log(ngx.DEBUG, "exp: " .. exp)
     local red = redis:new()
     red:set_timeout(1000)  -- 1 second~
     local ok, err = red:connect(redisHost, redisPort)
@@ -268,7 +271,7 @@ function cache_get(key , redisHost, redisPort)
             ngx.say("Failed to get value from Redis: ", err)
             return
         end
-        ngx.log(ngx.DEBUG, res)
+        --ngx.log(ngx.DEBUG, res)
         return res;
     end
 end 

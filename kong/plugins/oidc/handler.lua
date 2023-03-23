@@ -168,13 +168,14 @@ function update_login(oidcConfig, sessionConfig, cookie_value)
 end
 
 function make_oidc(oidcConfig, sessionConfig)
-    ngx.log(ngx.INFO, "OidcHandler calling authenticate, requested path: " .. ngx.var.request_uri)
+    ngx.log(ngx.DEBUG, "OidcHandler calling authenticate, requested path: " .. ngx.var.request_uri)
     local res, err = require("resty.openidc").authenticate(oidcConfig, nil, nil, sessionConfig)
     if err then
         if oidcConfig.recovery_page_path then
             ngx.log(ngx.DEBUG, "Entering recovery page: " .. oidcConfig.recovery_page_path)
             ngx.redirect(oidcConfig.recovery_page_path)
         end
+        ngx.log(ngx.DEBUG, "ERROR OIDC HANDLER MAKE OIDC: " .. err)
         utils.exit(500, err, ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
     return res

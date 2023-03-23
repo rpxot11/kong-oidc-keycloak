@@ -112,7 +112,7 @@ function getTokenfromCache(cookie_value, host, port, secret)
             ngx.log(ngx.DEBUG, "timestamp " .. timestamp);
             local inFiveMinuts = os.time(os.date('*t')) + 60;
             local inThirtyMinuts = os.time(os.date('*t')) + 180;
-            if(timestamp <  inFiveMinuts)
+            if(tonumber(timestamp) <  inFiveMinuts)
             then
                 ngx.log(ngx.DEBUG, "timestamp < 5 minuts ");
                 ngx.log(ngx.DEBUG, " ******************** TIMESTAMP UPDATE ***********************");

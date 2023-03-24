@@ -10,7 +10,7 @@ volumes:
 
 services:
   kong-db:
-    image: postgres:9.6
+    image: postgres:9.6-alpine
     volumes:
       - kong-datastore:/var/lib/postgresql/data
     networks:
@@ -18,9 +18,9 @@ services:
     ports:
       - "15432:5432"
     environment:
-      POSTGRES_DB: api-gw
-      POSTGRES_USER: kong
-      POSTGRES_PASSWORD:
+      POSTGRES_DB:       api-gw
+      POSTGRES_USER:     kong
+      POSTGRES_PASSWORD: kong
 
   redis:
     image: "redis:alpine"
@@ -46,10 +46,12 @@ services:
       - "443:8443" # Listener  (SSL)
       - "444:8444" # Admin API (SSL)
     environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: kong-db
-      KONG_PG_PORT: 5432
-      KONG_PG_DATABASE: api-gw
+      KONG_DATABASE:         postgres
+      KONG_PG_HOST:          kong-db
+      KONG_PG_PORT:          5432
+      KONG_PG_DATABASE:      api-gw
+      KONG_PG_USER:          kong
+      KONG_PG_PASSWORD:      kong
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr

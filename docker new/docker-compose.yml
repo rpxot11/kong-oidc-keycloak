@@ -41,10 +41,10 @@ services:
     networks:
       - kong-net
     ports:
-      - "8000:8000" # Listener
-      - "8001:8001" # Admin API
-      - "8443:8443" # Listener  (SSL)
-      - "8444:8444" # Admin API (SSL)
+      - "80:8000" # Listener
+      - "8081:8001" # Admin API
+      - "443:8443" # Listener  (SSL)
+      - "444:8444" # Admin API (SSL)
     environment:
       KONG_DATABASE: postgres
       KONG_PG_HOST: kong-db

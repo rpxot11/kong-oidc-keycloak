@@ -143,7 +143,7 @@ function login(oidcConfig, sessionConfig)
         --cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:" .. uuid , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:".. uuid .. ":timestamp" , inThirtyMinuts, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
-        ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; secure; HttpOnly"
+        ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
         return ngx.redirect("/")
     end
 end

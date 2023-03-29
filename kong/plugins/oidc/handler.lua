@@ -134,8 +134,8 @@ end
 function login(oidcConfig, sessionConfig)
     local inThirtyMinuts = os.time(os.date('*t')) + 180;
     response = make_oidc(oidcConfig, sessionConfig);
-    ngx.log(ngx.DEBUG, "************************** RESPONSE : " .. response);
-
+    local print = response;
+    ngx.log(ngx.DEBUG, "************************** RESPONSE : " .. print);
     if response then
         uuid.seed()
         local uuid = uuid()

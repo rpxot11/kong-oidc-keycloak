@@ -133,7 +133,7 @@ end
 
 function login(oidcConfig, sessionConfig)
     local inThirtyMinuts = os.time(os.date('*t')) + 180;
-    local response = make_oidc(oidcConfig, sessionConfig);
+    response = make_oidc(oidcConfig, sessionConfig);
     if response then
         uuid.seed()
         local uuid = uuid()

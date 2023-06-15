@@ -153,7 +153,6 @@ function login(oidcConfig, sessionConfig)
         uuid.seed()
         local uuid = uuid()
         --local uuid = "12342135124542151425wfmlkwmfl12435124451245"
-        uuid.seed();
         local xsrf = uuid();
         ngx.log(ngx.DEBUG, "Login sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)

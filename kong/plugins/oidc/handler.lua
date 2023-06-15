@@ -153,13 +153,13 @@ function login(oidcConfig, sessionConfig)
         uuid.seed()
         local uuid = uuid()
         --local uuid = "12342135124542151425wfmlkwmfl12435124451245"
-        local xsrf = xsrfRandom();
+        --local xsrf = xsrfRandom();
         ngx.log(ngx.DEBUG, "Login sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
         --cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:" .. uuid , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:".. uuid .. ":timestamp" , timeout, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
-        cache_set("session_jwt:".. uuid .. ":xsrf" , xsrf, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
+        --cache_set("session_jwt:".. uuid .. ":xsrf" , xsrf, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
 
         -- TODO : REPLACE FOR SECURE CONNECTIONS 
 
@@ -167,9 +167,10 @@ function login(oidcConfig, sessionConfig)
         --                             "XSRF-TOKEN=" .. xsrf .."; path=/; secure"
         --                             };
 
-        ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; HttpOnly; SameSite=Lax" , 
-            "XSRF-TOKEN=" .. xsrf .."; path=/"
-        };
+        -- ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; HttpOnly; SameSite=Lax" , 
+        --     "XSRF-TOKEN=" .. xsrf .."; path=/"
+        -- };
+        ngx.header['Set-Cookie'] = sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; HttpOnly; SameSite=Lax"
         return ngx.redirect("/")
     end
 end
@@ -323,13 +324,13 @@ function cache_get(key , redisHost, redisPort)
     end
 end 
 
-function xsrfRandom()
-    local random = math.random
-    local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    return string.gsub(template, '[xy]', function (c)
-        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
-        return string.format('%x', v)
-    end)
-end
+-- function xsrfRandom()
+--     local random = math.random
+--     local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+--     return string.gsub(template, '[xy]', function (c)
+--         local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
+--         return string.format('%x', v)
+--     end)
+-- end
 
 return OidcHandler

@@ -155,11 +155,9 @@ function logout(oidcConfig, sessionConfig)
     --     --ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
     --     return ngx.redirect("/")
     -- end
-    ngx.log(ngx.DEBUG, " ******************** Logout Process **********************");
-
-    ngx.header['Set-Cookie'] = "TMLCRM=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; SameSite=Lax, session=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; SameSite=Lax;"
-
-    return ngx.redirect("/")
+    ngx.log(ngx.DEBUG, " ******************** Logout sucess **********************");
+    ngx.header['Set-Cookie'] =  "TMLCRM=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax";
+    return nxg.Response(200, "www.google.pt");
 end
 
 function update_login(oidcConfig, sessionConfig, cookie_value)

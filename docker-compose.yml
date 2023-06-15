@@ -34,8 +34,13 @@ services:
     build:
       context: kong/
       dockerfile: Dockerfile
-    #extra_hosts:
+    extra_hosts:
     #  - "keycloak-host:10.18.18.118"
+       - "whoami.tmlmobilidade.pt:152.70.161.4"
+       - "fe-crm-lite.tmlmobilidade.pt:152.70.161.4"
+       - "be-edge-crm.tmlmobilidade.pt:152.70.161.4"
+       - "be-edge-pp.tmlmobilidade.pt:152.70.161.4"
+       - "fe-pp.tmlmobilidade.pt:152.70.161.4"
     depends_on:
       - kong-db
     networks:
@@ -45,6 +50,7 @@ services:
       - "8081:8001" # Admin API
       - "443:8443" # Listener  (SSL)
       - "444:8444" # Admin API (SSL)
+      - "4443:8000" #Port ssl configured
     environment:
       KONG_DATABASE:         postgres
       KONG_PG_HOST:          kong-db

@@ -111,7 +111,7 @@ function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, host, port, 
         then
             ngx.log(ngx.DEBUG, "timestamp " .. timestamp);
             local inFiveMinuts = os.time(os.date('*t')) + 60;
-            local inThirtyMinuts = os.time(os.date('*t')) + 180;
+            local inThirtyMinuts = os.time(os.date('*t')) + 14400;
             if(tonumber(timestamp) <  inFiveMinuts)
             then
                 ngx.log(ngx.DEBUG, "timestamp < 5 minuts ");
@@ -132,7 +132,7 @@ function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, host, port, 
 end
 
 function login(oidcConfig, sessionConfig)
-    local inThirtyMinuts = os.time(os.date('*t')) + 180;
+    local inThirtyMinuts = os.time(os.date('*t')) + 14400;
     response = make_oidc(oidcConfig, sessionConfig);
     if response then
         uuid.seed()
@@ -149,12 +149,15 @@ function login(oidcConfig, sessionConfig)
 end
 
 function logout(oidcConfig, sessionConfig)
-    response = make_oidc_logout(oidcConfig, sessionConfig);
-    if response then
-        ngx.log(ngx.DEBUG, "Logout sucess");
-        --ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
-        return ngx.redirect("/")
-    end
+    -- response = make_oidc_logout(oidcConfig, sessionConfig);
+    -- if response then
+    --     ngx.log(ngx.DEBUG, "Logout sucess");
+    --     --ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
+    --     return ngx.redirect("/")
+    -- end
+    
+    ngx.header['Set-Cookie'] =  "TMLCRM=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; Secure; HttpOnly; SameSite=Lax";
+    utils.exit(200);
 end
 
 function update_login(oidcConfig, sessionConfig, cookie_value)

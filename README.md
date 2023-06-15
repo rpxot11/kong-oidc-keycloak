@@ -163,6 +163,3 @@ docker compose stop kong
 docker image rm kong-oidc-keycloak-kong --force
 docker compose up -d kong
 docker logs -f kong-oidc-keycloak-kong-1
-
-
-

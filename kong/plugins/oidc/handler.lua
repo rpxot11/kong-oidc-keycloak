@@ -45,14 +45,14 @@ function handle(oidcConfig, sessionConfig)
             local cookieName = sessionConfig.jwt.cookie_name
             local var_name = "cookie_" .. cookieName
             local cookie_value = ngx.var[var_name]
-            local xsrf_cookie = ngx.var["cookie_XSRF_TOKEN"]
+            --local xsrf_cookie = ngx.var["cookie_XSRF_TOKEN"]
         
             if(cookie_value ~= nil)
             then
                 ngx.log(ngx.DEBUG, "***************  Cookie  :  ***************" )
                 ngx.log(ngx.DEBUG, cookie_value)
     
-                local token = getTokenfromCache(oidcConfig, sessionConfig, cookie_value, xsrf_cookie,  sessionConfig.redis.host, sessionConfig.redis.port, sessionConfig.jwt.secret)
+                local token = getTokenfromCache(oidcConfig, sessionConfig, cookie_value,  sessionConfig.redis.host, sessionConfig.redis.port, sessionConfig.jwt.secret)
                 if(token ~= nil)
                 then 
                     ngx.log(ngx.DEBUG, "***************  Cache value :  ***************" )
@@ -103,7 +103,7 @@ end
 end
 
 
-function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, xsrf_cookie,  host, port, secret)
+function getTokenfromCache(oidcConfig, sessionConfig, cookie_value,  host, port, secret)
     local requestMethod = ngx.var.request_method
     ngx.log(ngx.DEBUG, "********* GETTING TOKEN FROM CACHE ***********");
     local token = cache_get("session_jwt:".. cookie_value, host, port)

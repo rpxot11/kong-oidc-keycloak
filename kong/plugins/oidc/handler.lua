@@ -171,7 +171,7 @@ function logout(oidcConfig, sessionConfig)
     -- Set the response status code to 200 and return the JSON body
     ngx.status = 200
     ngx.header.content_type = "application/json"
-    ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", "session=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax"};
+    ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", sessionConfig.name .. "=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax"};
     ngx.say(responseBody)
     ngx.exit(ngx.HTTP_OK)
 end

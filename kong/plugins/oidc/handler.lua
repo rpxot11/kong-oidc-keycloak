@@ -112,14 +112,14 @@ function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, host, port, 
         if(timestamp ~= nil)
         then
             ngx.log(ngx.DEBUG, "timestamp " .. timestamp);
-            local inFiveMinuts = os.time(os.date('*t')) + 60;
-            local inThirtyMinuts = os.time(os.date('*t')) + 14400;
+            local inFiveMinuts = os.time(os.date('*t')) + 300;
+            local timeout = os.time(os.date('*t')) + sessionConfig.jwt.timeout;
             if(tonumber(timestamp) <  inFiveMinuts)
             then
                 ngx.log(ngx.DEBUG, "timestamp < 5 minuts ");
                 ngx.log(ngx.DEBUG, " ******************** TIMESTAMP UPDATE ***********************");
                 --refresh timestamp
-                cache_set("session_jwt:".. cookie_value .. ":timestamp", inThirtyMinuts, 43200,  host, port) 
+                cache_set("session_jwt:".. cookie_value .. ":timestamp", timeout, 43200,  host, port) 
                 response = make_oidc(oidcConfig, sessionConfig);
                 if response then
                     ngx.log(ngx.DEBUG, "Update sucess");
@@ -134,7 +134,7 @@ function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, host, port, 
 end
 
 function login(oidcConfig, sessionConfig)
-    local inThirtyMinuts = os.time(os.date('*t')) + 14400;
+    local timeout = os.time(os.date('*t')) + sessionConfig.jwt.timeout;
     response = make_oidc(oidcConfig, sessionConfig);
     if response then
         uuid.seed()
@@ -144,7 +144,7 @@ function login(oidcConfig, sessionConfig)
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
         --cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:" .. uuid , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
-        cache_set("session_jwt:".. uuid .. ":timestamp" , inThirtyMinuts, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
+        cache_set("session_jwt:".. uuid .. ":timestamp" , timeout, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
         ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
         return ngx.redirect("/")
     end
@@ -176,15 +176,15 @@ function logout(oidcConfig, sessionConfig)
     ngx.exit(ngx.HTTP_OK)
 end
 
-function update_login(oidcConfig, sessionConfig, cookie_value)
-    response = make_oidc(oidcConfig, sessionConfig);
-    if response then
-        ngx.log(ngx.DEBUG, "Update sucess");
-        local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
-        cache_set("session_jwt:" .. cookie_value , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
-        return token;
-    end
-end
+-- function update_login(oidcConfig, sessionConfig, cookie_value)
+--     response = make_oidc(oidcConfig, sessionConfig);
+--     if response then
+--         ngx.log(ngx.DEBUG, "Update sucess");
+--         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
+--         cache_set("session_jwt:" .. cookie_value , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
+--         return token;
+--     end
+-- end
 
 function make_oidc(oidcConfig, sessionConfig)
     ngx.log(ngx.DEBUG, "OidcHandler calling authenticate, requested path: " .. ngx.var.request_uri)

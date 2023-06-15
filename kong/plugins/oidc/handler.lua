@@ -153,7 +153,7 @@ function login(oidcConfig, sessionConfig)
         uuid.seed()
         local uuid = uuid()
         --local uuid = "12342135124542151425wfmlkwmfl12435124451245"
-        local xsrf = uuid();
+        local xsrf = xsrfRandom();
         ngx.log(ngx.DEBUG, "Login sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
         --cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
@@ -313,5 +313,13 @@ function cache_get(key , redisHost, redisPort)
     end
 end 
 
+function xsrfRandom()
+    local random = math.random
+    local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    return string.gsub(template, '[xy]', function (c)
+        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
+        return string.format('%x', v)
+    end)
+end
 
 return OidcHandler

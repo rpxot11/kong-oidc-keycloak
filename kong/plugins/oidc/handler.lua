@@ -6,6 +6,8 @@ local session = require("kong.plugins.oidc.session")
 local redis = require "resty.redis"
 local socket = require("socket")
 local uuid = require("uuid")
+local cjson = require("cjson")
+
 
 OidcHandler.PRIORITY = 1000
 
@@ -163,8 +165,7 @@ function logout(oidcConfig, sessionConfig)
     local response = { logoutUrl = logoutUrl }
 
     -- Convert the Lua table to JSON format
-    local json = require("json")
-    local responseBody = json.encode(response)
+    local responseBody = cjson.encode(response)
 
     -- Set the response status code to 200 and return the JSON body
     ngx.status = 200

@@ -159,7 +159,8 @@ function logout(oidcConfig, sessionConfig)
     -- end
     ngx.log(ngx.DEBUG, " ******************** Logout sucess **********************");
     
-    local logoutUrl = "https://id.awinsys.com/auth/realms/tmlcrm/protocol/openid-connect/logout?redirect_uri=http://www.crm-lite.kong.dev12.awinsys.com" -- Replace with the actual logout URL
+    --local logoutUrl = "https://id.awinsys.com/auth/realms/tmlcrm/protocol/openid-connect/logout?redirect_uri=http://www.crm-lite.kong.dev12.awinsys.com" -- Replace with the actual logout URL
+    local logoutUrl = oidcConfig.logout_path .."?redirect_uri=" .. oidcConfig.redirect_after_logout_uri -- Replace with the actual logout URL
 
 -- Create a Lua table with the desired response body
     local response = { logoutUrl = logoutUrl }

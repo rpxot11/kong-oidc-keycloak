@@ -156,8 +156,9 @@ function logout(oidcConfig, sessionConfig)
     --     return ngx.redirect("/")
     -- end
     ngx.log(ngx.DEBUG, " ******************** Logout Process **********************");
-    ngx.header['Set-Cookie'] =  "TMLCRM=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; Secure; HttpOnly; SameSite=Lax,";
-    ngx.header['Set-Cookie'] = "session=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; Secure; HttpOnly; SameSite=Lax;"
+
+    ngx.header['Set-Cookie'] = "TMLCRM=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; Secure; HttpOnly; SameSite=Lax, session=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; Secure; HttpOnly; SameSite=Lax;"
+
     return ngx.redirect("/")
 end
 

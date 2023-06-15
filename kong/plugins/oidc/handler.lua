@@ -45,13 +45,14 @@ function handle(oidcConfig, sessionConfig)
             local cookieName = sessionConfig.jwt.cookie_name
             local var_name = "cookie_" .. cookieName
             local cookie_value = ngx.var[var_name]
+            local xsrf_cookie = ngx.var["cookie_XSRF_TOKEN"]
         
             if(cookie_value ~= nil)
             then
                 ngx.log(ngx.DEBUG, "***************  Cookie  :  ***************" )
                 ngx.log(ngx.DEBUG, cookie_value)
     
-                local token = getTokenfromCache(oidcConfig, sessionConfig, cookie_value, sessionConfig.redis.host, sessionConfig.redis.port, sessionConfig.jwt.secret)
+                local token = getTokenfromCache(oidcConfig, sessionConfig, cookie_value, xsrf_cookie,  sessionConfig.redis.host, sessionConfig.redis.port, sessionConfig.jwt.secret)
                 if(token ~= nil)
                 then 
                     ngx.log(ngx.DEBUG, "***************  Cache value :  ***************" )
@@ -102,7 +103,8 @@ end
 end
 
 
-function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, host, port, secret)
+function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, xsrf_cookie,  host, port, secret)
+    local requestMethod = ngx.var.request_method
     ngx.log(ngx.DEBUG, "********* GETTING TOKEN FROM CACHE ***********");
     local token = cache_get("session_jwt:".. cookie_value, host, port)
     if(token ~= nil)
@@ -127,6 +129,17 @@ function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, host, port, 
                     cache_set("session_jwt:" .. cookie_value , token, 43200, host, port)                    
                 end          
             end
+            ngx.log(ngx.DEBUG, "HTTP METHOD " .. requestMethod);
+            if requestMethod ~= "GET" then
+                ngx.log(ngx.DEBUG, "ENTERED XSRF VALIDATION");
+                local xsrf = cache_get("session_jwt:".. cookie_value .. ":xsrf", host, port)
+                ngx.log(ngx.DEBUG, "xsrf_cooke " .. xsrf_cookie);
+                ngx.log(ngx.DEBUG, "xsrf   " .. xsrf);
+                if(xsrf_cookie ~= xsrf) then
+                    ngx.log(ngx.DEBUG, "xsrf   UNAUTHORIZED");
+                    utils.exit(401, err, ngx.HTTP_UNAUTHORIZED)
+                end
+            end
             return token;
         end
     end
@@ -140,12 +153,17 @@ function login(oidcConfig, sessionConfig)
         uuid.seed()
         local uuid = uuid()
         --local uuid = "12342135124542151425wfmlkwmfl12435124451245"
+        uuid.seed();
+        local xsrf = uuid();
         ngx.log(ngx.DEBUG, "Login sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
         --cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:" .. uuid , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:".. uuid .. ":timestamp" , timeout, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
-        ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
+        cache_set("session_jwt:".. uuid .. ":xsrf" , xsrf, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
+        ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; Secure; HttpOnly; SameSite=Lax" , 
+                                    "XSRF-TOKEN=" .. xsrf .."; path=/; secure"
+                                    };
         return ngx.redirect("/")
     end
 end

@@ -156,8 +156,22 @@ function logout(oidcConfig, sessionConfig)
     --     return ngx.redirect("/")
     -- end
     ngx.log(ngx.DEBUG, " ******************** Logout sucess **********************");
+    
+    local logoutUrl = "https://example.com/logout" -- Replace with the actual logout URL
+
+-- Create a Lua table with the desired response body
+    local response = { logoutUrl = logoutUrl }
+
+    -- Convert the Lua table to JSON format
+    local json = require("json")
+    local responseBody = json.encode(response)
+
+    -- Set the response status code to 200 and return the JSON body
+    ngx.status = 200
+    ngx.header.content_type = "application/json"
     ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", "session=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax"};
-    ngx.say("www.google.pt");
+    ngx.say(responseBody)
+    ngx.exit(ngx.HTTP_OK)
 end
 
 function update_login(oidcConfig, sessionConfig, cookie_value)

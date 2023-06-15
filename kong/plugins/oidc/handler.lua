@@ -157,7 +157,7 @@ function logout(oidcConfig, sessionConfig)
     -- end
     ngx.log(ngx.DEBUG, " ******************** Logout sucess **********************");
     ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", "session=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax"};
-    return ngx.redirect("/")
+    ngx.say("www.google.pt");
 end
 
 function update_login(oidcConfig, sessionConfig, cookie_value)

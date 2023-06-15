@@ -160,9 +160,16 @@ function login(oidcConfig, sessionConfig)
         cache_set("session_jwt:" .. uuid , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:".. uuid .. ":timestamp" , timeout, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:".. uuid .. ":xsrf" , xsrf, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
-        ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; Secure; HttpOnly; SameSite=Lax" , 
-                                    "XSRF-TOKEN=" .. xsrf .."; path=/; secure"
-                                    };
+
+        -- TODO : REPLACE FOR SECURE CONNECTIONS 
+
+        -- ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; Secure; HttpOnly; SameSite=Lax" , 
+        --                             "XSRF-TOKEN=" .. xsrf .."; path=/; secure"
+        --                             };
+
+        ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; HttpOnly; SameSite=Lax" , 
+        "XSRF-TOKEN=" .. xsrf .."; path=/"
+        };
         return ngx.redirect("/")
     end
 end
@@ -188,7 +195,10 @@ function logout(oidcConfig, sessionConfig)
     -- Set the response status code to 200 and return the JSON body
     ngx.status = 200
     ngx.header.content_type = "application/json"
-    ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", sessionConfig.name .. "=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax"};
+    ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", 
+                                sessionConfig.name .. "=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax",
+                                "XSRF-TOKEN=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax"
+                            };
     ngx.say(responseBody)
     ngx.exit(ngx.HTTP_OK)
 end

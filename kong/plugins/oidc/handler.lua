@@ -45,14 +45,13 @@ function handle(oidcConfig, sessionConfig)
             local cookieName = sessionConfig.jwt.cookie_name
             local var_name = "cookie_" .. cookieName
             local cookie_value = ngx.var[var_name]
-            --local xsrf_cookie = ngx.var["cookie_XSRF_TOKEN"]
         
             if(cookie_value ~= nil)
             then
                 ngx.log(ngx.DEBUG, "***************  Cookie  :  ***************" )
                 ngx.log(ngx.DEBUG, cookie_value)
     
-                local token = getTokenfromCache(oidcConfig, sessionConfig, cookie_value,  sessionConfig.redis.host, sessionConfig.redis.port, sessionConfig.jwt.secret)
+                local token = getTokenfromCache(oidcConfig, sessionConfig, cookie_value, sessionConfig.redis.host, sessionConfig.redis.port, sessionConfig.jwt.secret)
                 if(token ~= nil)
                 then 
                     ngx.log(ngx.DEBUG, "***************  Cache value :  ***************" )
@@ -103,8 +102,7 @@ end
 end
 
 
-function getTokenfromCache(oidcConfig, sessionConfig, cookie_value,  host, port, secret)
-    local requestMethod = ngx.var.request_method
+function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, host, port, secret)
     ngx.log(ngx.DEBUG, "********* GETTING TOKEN FROM CACHE ***********");
     local token = cache_get("session_jwt:".. cookie_value, host, port)
     if(token ~= nil)
@@ -129,17 +127,6 @@ function getTokenfromCache(oidcConfig, sessionConfig, cookie_value,  host, port,
                     cache_set("session_jwt:" .. cookie_value , token, 43200, host, port)                    
                 end          
             end
-            ngx.log(ngx.DEBUG, "HTTP METHOD " .. requestMethod);
-            -- if requestMethod ~= "GET" then
-            --     ngx.log(ngx.DEBUG, "ENTERED XSRF VALIDATION");
-            --     local xsrf = cache_get("session_jwt:".. cookie_value .. ":xsrf", host, port)
-            --     ngx.log(ngx.DEBUG, "xsrf_cooke " .. xsrf_cookie);
-            --     ngx.log(ngx.DEBUG, "xsrf   " .. xsrf);
-            --     if(xsrf_cookie ~= xsrf) then
-            --         ngx.log(ngx.DEBUG, "xsrf   UNAUTHORIZED");
-            --         utils.exit(401, err, ngx.HTTP_UNAUTHORIZED)
-            --     end
-            -- end
             return token;
         end
     end
@@ -153,24 +140,12 @@ function login(oidcConfig, sessionConfig)
         uuid.seed()
         local uuid = uuid()
         --local uuid = "12342135124542151425wfmlkwmfl12435124451245"
-        --local xsrf = xsrfRandom();
         ngx.log(ngx.DEBUG, "Login sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
         --cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:" .. uuid , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:".. uuid .. ":timestamp" , timeout, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
-        --cache_set("session_jwt:".. uuid .. ":xsrf" , xsrf, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
-
-        -- TODO : REPLACE FOR SECURE CONNECTIONS 
-
-        -- ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; Secure; HttpOnly; SameSite=Lax" , 
-        --                             "XSRF-TOKEN=" .. xsrf .."; path=/; secure"
-        --                             };
-
-        -- ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; HttpOnly; SameSite=Lax" , 
-        --     "XSRF-TOKEN=" .. xsrf .."; path=/"
-        -- };
-        ngx.header['Set-Cookie'] = sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/; HttpOnly; SameSite=Lax"
+        ngx.header['Set-Cookie'] =  sessionConfig.jwt.cookie_name.."=" .. uuid .. "; path=/"
         return ngx.redirect("/")
     end
 end
@@ -196,10 +171,7 @@ function logout(oidcConfig, sessionConfig)
     -- Set the response status code to 200 and return the JSON body
     ngx.status = 200
     ngx.header.content_type = "application/json"
-    ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", 
-                                sessionConfig.name .. "=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax",
-                                "XSRF-TOKEN=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax"
-                            };
+    ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", sessionConfig.name .. "=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax"};
     ngx.say(responseBody)
     ngx.exit(ngx.HTTP_OK)
 end
@@ -324,13 +296,5 @@ function cache_get(key , redisHost, redisPort)
     end
 end 
 
--- function xsrfRandom()
---     local random = math.random
---     local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
---     return string.gsub(template, '[xy]', function (c)
---         local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
---         return string.format('%x', v)
---     end)
--- end
 
 return OidcHandler

@@ -152,7 +152,7 @@ function login(oidcConfig, sessionConfig)
         local uuid = uuid();
         local xsrf = xsrfRandom();
         --local uuid = "12342135124542151425wfmlkwmfl12435124451245"
-        ngx.log(ngx.DEBUG, "Login sucess");
+        --ngx.log(ngx.DEBUG, "Login sucess");
         local token = utils.getJwtAccessToken(response.access_token, response.user, sessionConfig.jwt.secret)
         --cache_set("session_jwt:" .. uuid , token, sessionConfig.jwt.timeout, sessionConfig.redis.host, sessionConfig.redis.port)
         cache_set("session_jwt:" .. uuid , token, 43200, sessionConfig.redis.host, sessionConfig.redis.port)
@@ -189,7 +189,7 @@ function logout(oidcConfig, sessionConfig)
     -- Set the response status code to 200 and return the JSON body
     ngx.status = 200
     ngx.header.content_type = "application/json"
-    ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", sessionConfig.name .. "=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax"};
+    ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", sessionConfig.name .. "=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", "XSRF-TOKEN=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/"};
     ngx.say(responseBody)
     ngx.exit(ngx.HTTP_OK)
 end
@@ -252,7 +252,7 @@ end
 
 -- set value in server-wide cache if available
 function cache_set(key, value, exp, redisHost, redisPort)
-    ngx.log(ngx.DEBUG, "******* CACHE SET START ******")
+    --ngx.log(ngx.DEBUG, "******* CACHE SET START ******")
     --ngx.log(ngx.DEBUG, "key: " .. key)
     --ngx.log(ngx.DEBUG, "value: " .. value)
     --ngx.log(ngx.DEBUG, "exp: " .. exp)
@@ -276,13 +276,13 @@ function cache_set(key, value, exp, redisHost, redisPort)
         ngx.say("Failed to set expiration time for key: ", err)
         return
     end
-    ngx.log(ngx.DEBUG, "******* CACHE SET END ******")
+    --ngx.log(ngx.DEBUG, "******* CACHE SET END ******")
     red:close()
 end
   
   -- retrieve value from server-wide cache if available
 function cache_get(key , redisHost, redisPort)
-    ngx.log(ngx.DEBUG, "CAHCE GET SATART")
+    --ngx.log(ngx.DEBUG, "CAHCE GET SATART")
     local red = redis:new()
     red:set_timeout(1000)  -- 1 second
 
@@ -298,7 +298,7 @@ function cache_get(key , redisHost, redisPort)
         ngx.say("Failed to get ttl from Redis: ", err)
         return
     else 
-        ngx.log(ngx.DEBUG, "SOME TTL FOUND " .. ttl)
+        --ngx.log(ngx.DEBUG, "SOME TTL FOUND " .. ttl)
     end
     
     -- Check if the ttl is greater than 0

@@ -136,7 +136,7 @@ function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, host, port, 
                 if xsrf == nil or xsrf_cookie == nil or xsrf ~= xsrf_cookie then
                     ngx.log(ngx.DEBUG, "FAILED xsrf validation");
                     utils.exit(401, err, ngx.HTTP_UNAUTHORIZED)
-                else
+                end
             end
             return token;
         end

@@ -127,6 +127,19 @@ function getTokenfromCache(oidcConfig, sessionConfig, cookie_value, host, port, 
                     cache_set("session_jwt:" .. cookie_value , token, 43200, host, port)                    
                 end          
             end
+
+            local requestMethod = ngx.var.request_method;
+            ngx.log(ngx.DEBUG, " -*-*-* -*-*-* -*-*-*HTTP METHOD -*-*-* -*-*-* -*-*-*"  .. requestMethod);
+            if requestMethod ~= "GET" then
+                ngx.log(ngx.DEBUG, "ENTERED XSRF VALIDATION");
+                local xsrf = cache_get("session_jwt:".. cookie_value .. ":xsrf", host, port)
+                ngx.log(ngx.DEBUG, "xsrf_cooke " .. xsrf_cookie);
+                ngx.log(ngx.DEBUG, "xsrf   " .. xsrf);
+                -- if(xsrf_cookie ~= xsrf) then
+                --     ngx.log(ngx.DEBUG, "xsrf   UNAUTHORIZED");
+                --     utils.exit(401, err, ngx.HTTP_UNAUTHORIZED)
+                -- end
+            end
             return token;
         end
     end

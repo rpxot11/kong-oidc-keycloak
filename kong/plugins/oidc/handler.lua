@@ -213,7 +213,8 @@ function make_oidc(oidcConfig, sessionConfig)
             ngx.redirect(oidcConfig.recovery_page_path)
         end
         ngx.log(ngx.DEBUG, "ERROR OIDC HANDLER MAKE OIDC: " .. err)
-        utils.exit(500, err, ngx.HTTP_INTERNAL_SERVER_ERROR)
+        ngx.header['Set-Cookie'] =  {sessionConfig.jwt.cookie_name.."=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", sessionConfig.name .. "=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax", "XSRF-TOKEN=; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; Path=/"};
+        return ngx.redirect("/")
     end
     return res
 end
